@@ -27,34 +27,65 @@ impl<'a> Config<'a> {
 
 pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
-    let lines = if config.case_sensitive {
-        search(&contents, &config.query)
+    let query = &config.query;
+    if config.case_sensitive {
+        SimpleMatcher::new(query).search_and_print(&contents);
     } else {
-        search_insensitive(&contents, &config.query)
-    };
-    for line in lines {
-        println!("{}", line);
+        CaseInsensitiveMacher::new(query).search_and_print(&contents);
     }
     Ok(())
 }
 
-fn search<'a>(contents: &'a str, query: &str) -> Vec<&'a str> {
-    let mut res = vec![];
-    for line in contents.lines() {
-        if line.contains(query) {
-            res.push(line)
-        }
-    }
-    res
+trait LineMatcher {
+    fn line_matches(&self, line: &str) -> bool;
 }
 
-fn search_insensitive<'a>(contents: &'a str, query: &str) -> Vec<&'a str> {
-    let mut res = vec![];
-    let lowercase_query = query.to_lowercase();
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&lowercase_query) {
-            res.push(line)
+trait SearchPrinter {
+    fn search_and_print(&self, contents: &str);
+}
+
+impl<T: LineMatcher> SearchPrinter for T {
+    fn search_and_print(&self, contents: &str) {
+        for line in contents.lines() {
+            if self.line_matches(line) {
+                println!("{}", line);
+            }
         }
     }
-    res
+}
+
+struct SimpleMatcher {
+    query: String,
+}
+
+impl SimpleMatcher {
+    fn new(query: &str) -> Self {
+        Self {
+            query: query.to_string(),
+        }
+    }
+}
+
+impl LineMatcher for SimpleMatcher {
+    fn line_matches(&self, line: &str) -> bool {
+        line.contains(&self.query)
+    }
+}
+
+struct CaseInsensitiveMacher {
+    query: String,
+}
+
+impl CaseInsensitiveMacher {
+    fn new(query: &str) -> Self {
+        Self {
+            query: query.to_lowercase(),
+        }
+    }
+}
+
+impl LineMatcher for CaseInsensitiveMacher {
+    fn line_matches(&self, line: &str) -> bool {
+        line.to_lowercase().contains(&self.query)
+    }
 }
