@@ -27,32 +27,25 @@ impl<'a> Config<'a> {
 
 pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
-    let lines = if config.case_sensitive {
-        search(&contents, &config.query)
+    let lw_query = config.query.to_lowercase();
+    let match_fn: Box<dyn Fn(&str) -> bool> = if config.case_sensitive {
+        Box::new(|line| line.contains(&config.query))
     } else {
-        search_insensitive(&contents, &config.query)
+        Box::new(|line| line.to_lowercase().contains(&lw_query))
     };
-    for line in lines {
+    for line in search(&contents, match_fn) {
         println!("{}", line);
     }
     Ok(())
 }
 
-fn search<'a>(contents: &'a str, query: &str) -> Vec<&'a str> {
+fn search<'a, T>(contents: &'a str, matcher: T) -> Vec<&'a str>
+where
+    T: Fn(&str) -> bool,
+{
     let mut res = vec![];
     for line in contents.lines() {
-        if line.contains(query) {
-            res.push(line)
-        }
-    }
-    res
-}
-
-fn search_insensitive<'a>(contents: &'a str, query: &str) -> Vec<&'a str> {
-    let mut res = vec![];
-    let lowercase_query = query.to_lowercase();
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&lowercase_query) {
+        if matcher(line) {
             res.push(line)
         }
     }
