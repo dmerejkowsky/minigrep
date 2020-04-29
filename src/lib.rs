@@ -39,22 +39,16 @@ pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
 }
 
 fn search<'a>(contents: &'a str, query: &str) -> Vec<&'a str> {
-    let mut res = vec![];
-    for line in contents.lines() {
-        if line.contains(query) {
-            res.push(line)
-        }
-    }
-    res
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
 fn search_insensitive<'a>(contents: &'a str, query: &str) -> Vec<&'a str> {
-    let mut res = vec![];
     let lowercase_query = query.to_lowercase();
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&lowercase_query) {
-            res.push(line)
-        }
-    }
-    res
+    contents
+        .lines()
+        .filter(|line| line.to_lowercase().contains(&lowercase_query))
+        .collect()
 }
