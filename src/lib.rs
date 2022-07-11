@@ -16,7 +16,7 @@ impl<'a> Config<'a> {
         let query = &args[1];
         let filename = &args[2];
 
-        let case_sensitive = env::var("MINIGREP_CASE_INSENSITIVE").is_err();
+        let case_sensitive = !env::var("MINIGREP_CASE_INSENSITIVE").is_ok();
         Ok(Config {
             query,
             filename,
