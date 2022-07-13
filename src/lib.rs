@@ -28,9 +28,9 @@ impl<'a> Config<'a> {
 pub fn run(config: &Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.filename)?;
     let lines = if config.case_sensitive {
-        search(&contents, &config.query)
+        search(&contents, config.query)
     } else {
-        search_insensitive(&contents, &config.query)
+        search_insensitive(&contents, config.query)
     };
     for line in lines {
         println!("{}", line);
